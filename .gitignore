@@ -1,0 +1,97 @@
+# ============================================
+# OS / Editor
+# ============================================
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+
+# ============================================
+# Frontend (Node.js / Vite / Vue)
+# ============================================
+frontend/node_modules/
+frontend/dist/
+frontend/dist-ssr/
+frontend/*.local
+frontend/.env
+frontend/.env.*
+!frontend/.env.example
+frontend/coverage/
+frontend/.eslintcache
+frontend/.stylelintcache
+
+# ============================================
+# Backend (Java / Maven / Spring Boot)
+# ============================================
+backend/**/target/
+backend/**/!.mvn/wrapper/maven-wrapper.jar
+backend/**/!**/src/main/**/target/
+backend/**/!**/src/test/**/target/
+
+# Maven
+backend/.mvn/
+backend/mvnw
+backend/mvnw.cmd
+backend/**/pom.xml.tag
+backend/**/pom.xml.releaseBackup
+backend/**/pom.xml.versionsBackup
+backend/**/pom.xml.next
+backend/**/release.properties
+backend/**/dependency-reduced-pom.xml
+backend/**/buildNumber.properties
+backend/**/.flattened-pom.xml
+
+# Gradle (if used)
+backend/**/.gradle/
+backend/**/build/
+!backend/**/gradle/wrapper/gradle-wrapper.jar
+!backend/**/src/main/**/build/
+!backend/**/src/test/**/build/
+
+# Spring Boot
+backend/**/application-local.yml
+backend/**/application-dev.yml
+backend/**/application-prod.yml
+
+# ============================================
+# Logs
+# ============================================
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# ============================================
+# Test / Coverage
+# ============================================
+coverage/
+.nyc_output/
+
+# ============================================
+# Temporary files
+# ============================================
+tmp/
+temp/
+*.tmp
+*.temp
+*.cache
+
+# ============================================
+# npm cache (project-local)
+# ============================================
+.npm-cache/
+
+# ============================================
+# Spec Workflow (if generated artifacts should be ignored)
+# ============================================
+# .spec-workflow/approvals/
+# .spec-workflow/archive/
