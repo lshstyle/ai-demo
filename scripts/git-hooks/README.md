@@ -1,4 +1,4 @@
-# Git Hooks
+﻿# Git Hooks
 
 为 `ai-demo` 仓库提供统一的 Git 钩子，用于在 commit message 中自动标记协作来源。
 
