@@ -1,0 +1,54 @@
+#!/bin/sh
+# ---------------------------------------------------------------
+# commit-msg hook: 自动为 AI 协助的提交添加 [AI] 前缀
+#
+# 约束：
+# 1. 如果 commit message 首行已包含 [AI] 或 [HUMAN] 标签，则不做改动；
+# 2. 否则根据环境变量 AI_COMMIT 决定：
+#    - AI_COMMIT=1   → 自动添加 [AI] 前缀
+#    - AI_COMMIT=0   → 自动添加 [HUMAN] 前缀
+#    - 未设置        → 默认按 AI 协助处理（加 [AI]），可通过 git 配置覆盖：
+#                      git config ai-demo.defaultAuthor human
+#
+# 安装方式：
+#   cp scripts/git-hooks/commit-msg .git/hooks/commit-msg
+#   chmod +x .git/hooks/commit-msg
+# ---------------------------------------------------------------
+
+MSG_FILE="$1"
+FIRST_LINE=$(head -n 1 "$MSG_FILE")
+
+# 1) 已经有 [AI] 或 [HUMAN] 前缀 → 跳过
+case "$FIRST_LINE" in
+  \[AI\]*|\[HUMAN\]*)
+    exit 0
+    ;;
+esac
+
+# 2) 合并/revert 等自动生成消息不处理
+case "$FIRST_LINE" in
+  Merge*|Revert*|"fixup!"*|"squash!"*)
+    exit 0
+    ;;
+esac
+
+# 3) 决定前缀
+PREFIX="[AI] "
+if [ "$AI_COMMIT" = "0" ]; then
+  PREFIX="[HUMAN] "
+else
+  DEFAULT_AUTHOR=$(git config --get ai-demo.defaultAuthor 2>/dev/null)
+  if [ "$AI_COMMIT" != "1" ] && [ "$DEFAULT_AUTHOR" = "human" ]; then
+    PREFIX="[HUMAN] "
+  fi
+fi
+
+# 4) 写回（使用临时文件保证原子性）
+TMP_FILE="${MSG_FILE}.tmp"
+{
+  printf '%s%s\n' "$PREFIX" "$FIRST_LINE"
+  tail -n +2 "$MSG_FILE"
+} > "$TMP_FILE"
+mv "$TMP_FILE" "$MSG_FILE"
+
+exit 0
