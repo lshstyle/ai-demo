@@ -1,14 +1,20 @@
 #!/bin/sh
 # ---------------------------------------------------------------
-# commit-msg hook: 自动为 AI 协助的提交添加 [AI] 前缀
+# commit-msg hook: 自动为 AI 协助的提交添加来源标签
 #
-# 约束：
-# 1. 如果 commit message 首行已包含 [AI] 或 [HUMAN] 标签，则不做改动；
-# 2. 否则根据环境变量 AI_COMMIT 决定：
-#    - AI_COMMIT=1   → 自动添加 [AI] 前缀
-#    - AI_COMMIT=0   → 自动添加 [HUMAN] 前缀
-#    - 未设置        → 默认按 AI 协助处理（加 [AI]），可通过 git 配置覆盖：
-#                      git config ai-demo.defaultAuthor human
+# 标签规范（与 Qoder 官方口径对齐）：
+#   [AI:AGENT]    - Agent 模式（多轮任务分解 / 全自主编辑）
+#   [AI:INLINE]   - Inline Chat（行内对话编辑）
+#   [AI:NEXT]     - NEXT 补全（光标附近多行预测）
+#   [HUMAN]       - 纯人工编写
+#
+# 标签决定逻辑（优先级从高到低）：
+#   1) commit message 已含 [AI:XXX] / [AI] / [HUMAN] → 保持原样
+#   2) 环境变量 AI_COMMIT=0              → [HUMAN]
+#   3) 环境变量 AI_SOURCE=AGENT|INLINE|NEXT → [AI:AGENT] / [AI:INLINE] / [AI:NEXT]
+#   4) 环境变量 AI_COMMIT=1 但未指定 AI_SOURCE → [AI:AGENT]（默认）
+#   5) 仓库配置 ai-demo.defaultAuthor=human → [HUMAN]
+#   6) 默认（未设置任何环境变量）        → [AI:AGENT]
 #
 # 安装方式：
 #   cp scripts/git-hooks/commit-msg .git/hooks/commit-msg
@@ -18,32 +24,48 @@
 MSG_FILE="$1"
 FIRST_LINE=$(head -n 1 "$MSG_FILE")
 
-# 1) 已经有 [AI] 或 [HUMAN] 前缀 → 跳过
+# 1) 已经有标签 → 跳过
 case "$FIRST_LINE" in
-  \[AI\]*|\[HUMAN\]*)
+  \[AI:AGENT\]*|\[AI:INLINE\]*|\[AI:NEXT\]*|\[AI\]*|\[HUMAN\]*)
     exit 0
     ;;
 esac
 
-# 2) 合并/revert 等自动生成消息不处理
+# 2) 合并/revert 等自动消息不处理
 case "$FIRST_LINE" in
   Merge*|Revert*|"fixup!"*|"squash!"*)
     exit 0
     ;;
 esac
 
-# 3) 决定前缀
-PREFIX="[AI] "
+# 3) 解析 AI_SOURCE（大写化）
+SOURCE=""
+if [ -n "$AI_SOURCE" ]; then
+  SOURCE=$(printf '%s' "$AI_SOURCE" | tr '[:lower:]' '[:upper:]')
+fi
+
+# 4) 决定前缀
 if [ "$AI_COMMIT" = "0" ]; then
   PREFIX="[HUMAN] "
 else
   DEFAULT_AUTHOR=$(git config --get ai-demo.defaultAuthor 2>/dev/null)
-  if [ "$AI_COMMIT" != "1" ] && [ "$DEFAULT_AUTHOR" = "human" ]; then
+  if [ -z "$AI_COMMIT" ] && [ -z "$AI_SOURCE" ] && [ "$DEFAULT_AUTHOR" = "human" ]; then
     PREFIX="[HUMAN] "
+  else
+    case "$SOURCE" in
+      AGENT)   PREFIX="[AI:AGENT] "   ;;
+      INLINE)  PREFIX="[AI:INLINE] "  ;;
+      NEXT)    PREFIX="[AI:NEXT] "    ;;
+      "")      PREFIX="[AI:AGENT] "   ;;  # 默认 AGENT
+      *)
+        echo "commit-msg hook: 未知的 AI_SOURCE 值 '$AI_SOURCE'，允许值：AGENT | INLINE | NEXT" >&2
+        exit 1
+        ;;
+    esac
   fi
 fi
 
-# 4) 写回（使用临时文件保证原子性）
+# 5) 写回（临时文件保证原子性）
 TMP_FILE="${MSG_FILE}.tmp"
 {
   printf '%s%s\n' "$PREFIX" "$FIRST_LINE"
