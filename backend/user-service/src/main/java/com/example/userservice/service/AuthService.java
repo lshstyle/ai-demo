@@ -24,6 +24,7 @@ public class AuthService {
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
+    private final SmsCodeService smsCodeService;
 
     /**
      * 账号密码登录
@@ -44,17 +45,15 @@ public class AuthService {
     }
 
     /**
-     * 手机号验证码登录
-     * 注意：验证码校验逻辑暂以固定值 "123456" 模拟，后续接入 Redis 缓存
+     * 手机号验证码登录：验证码由 Redis 存取
      */
     public LoginResponse loginByPhone(PhoneLoginRequest request) {
-        if (!"123456".equals(request.getCode())) {
+        if (!smsCodeService.verifyCode(request.getPhone(), request.getCode())) {
             throw new BusinessException(400, "验证码无效或已过期");
         }
         User user = userMapper.selectOne(
                 new LambdaQueryWrapper<User>().eq(User::getPhone, request.getPhone()));
         if (user == null) {
-            // 业务可选：自动注册；当前要求先注册
             throw new BusinessException(404, "该手机号未注册");
         }
         if (user.getStatus() == null || user.getStatus() != 1) {
@@ -64,14 +63,13 @@ public class AuthService {
     }
 
     /**
-     * 发送短信验证码（模拟）
+     * 发送短信验证码（Redis 存储 + 限流）
      */
     public void sendSmsCode(String phone) {
-        // TODO: 接入短信服务；Redis 缓存验证码 5 分钟
-        log.info("[模拟短信] 向 {} 发送验证码 123456", phone);
+        smsCodeService.sendCode(phone);
     }
 
-    private LoginResponse buildLoginResponse(User user) {
+    public LoginResponse buildLoginResponse(User user) {
         String accessToken = jwtUtil.generateAccessToken(user.getId(), user.getUsername());
         String refreshToken = jwtUtil.generateRefreshToken(user.getId(), user.getUsername());
         return new LoginResponse(

@@ -54,3 +54,31 @@ export function logout() {
     method: 'POST'
   })
 }
+
+/** 微信扫码登录相关 */
+export interface WechatQrCodeResult {
+  state: string
+  qrCodeUrl: string
+  authorizeUrl: string
+  expireSeconds: number
+}
+
+export interface WechatLoginStatusResult {
+  status: 'PENDING' | 'SCANNED' | 'CONFIRMED' | 'EXPIRED'
+  loginResult: LoginResult | null
+}
+
+export function fetchWechatQrCode() {
+  return request<WechatQrCodeResult>({
+    url: '/auth/wechat/qrcode',
+    method: 'GET'
+  })
+}
+
+export function pollWechatStatus(state: string) {
+  return request<WechatLoginStatusResult>({
+    url: '/auth/wechat/status',
+    method: 'GET',
+    params: { state }
+  })
+}

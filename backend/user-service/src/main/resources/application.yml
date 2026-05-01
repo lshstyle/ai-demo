@@ -11,6 +11,18 @@ spring:
     password: root
     driver-class-name: com.mysql.cj.jdbc.Driver
 
+  redis:
+    host: localhost
+    port: 6379
+    database: 0
+    # password: 
+    timeout: 3000ms
+    lettuce:
+      pool:
+        max-active: 16
+        max-idle: 8
+        min-idle: 0
+
 # MyBatis-Plus 配置
 mybatis-plus:
   configuration:
@@ -36,6 +48,27 @@ jwt:
   header: Authorization
   # Token 前缀
   token-prefix: "Bearer "
+
+# 验证码配置
+sms:
+  # 验证码有效期（秒）
+  code-expire-seconds: 300
+  # 同一手机号发送间隔（秒）
+  send-interval-seconds: 60
+  # 演示环境固定验证码（不为空则使用固定值，生产置空）
+  mock-code: "123456"
+
+# 微信开放平台配置（演示配置，生产环境请替换真实参数）
+wechat:
+  app-id: demo-wx-app-id
+  app-secret: demo-wx-app-secret
+  redirect-uri: http://localhost:5173/login
+  # 术/scope
+  scope: snsapi_login
+  # 二维码/登录状态轮询卡过期时间（秒）
+  state-expire-seconds: 300
+  # 是否启用模拟模式（true 时不调用真实微信 API，从 demo 帐号向后填充用户）
+  mock: true
 
 management:
   endpoints:
