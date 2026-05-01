@@ -5,8 +5,44 @@ spring:
   application:
     name: user-service
 
+  datasource:
+    url: jdbc:mysql://localhost:3306/ai_demo?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+    username: root
+    password: root
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+# MyBatis-Plus 配置
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  global-config:
+    db-config:
+      id-type: auto
+      logic-delete-field: deleted
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+  mapper-locations: classpath*:mapper/**/*.xml
+
+# JWT 配置
+jwt:
+  # 生产环境请改为从环境变量或密钥管理服务读取
+  secret: ai-demo-jwt-secret-key-please-change-in-production-environment-2026
+  # Access Token 有效期：2小时（单位：毫秒）
+  access-token-expire: 7200000
+  # Refresh Token 有效期：7天（单位：毫秒）
+  refresh-token-expire: 604800000
+  # Token 请求头名称
+  header: Authorization
+  # Token 前缀
+  token-prefix: "Bearer "
+
 management:
   endpoints:
     web:
       exposure:
         include: health,info
+
+logging:
+  level:
+    com.example.userservice: debug
